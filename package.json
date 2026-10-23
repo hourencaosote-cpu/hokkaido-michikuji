@@ -1,0 +1,1 @@
+{"name":"hokkaido-michikuji","version":"1.0.0","private":true,"type":"module","scripts":{"build":"node build.mjs","test":"node --test core.test.mjs","start":"python3 -m http.server 4173"},"engines":{"node":">=20"}}
