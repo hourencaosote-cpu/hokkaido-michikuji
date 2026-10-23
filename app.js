@@ -33,8 +33,8 @@ function drawWheel(pool){
     ctx.strokeStyle=n>24?'#f9f5e929':'#f9f5e9a0';ctx.lineWidth=n>40?1:2;ctx.stroke();
     if(n>24 && i%Math.ceil(n/16)!==0)continue;
     ctx.save();ctx.translate(c,c);ctx.rotate(start+step/2);ctx.textAlign='right';ctx.textBaseline='middle';ctx.fillStyle=[0,4,6].includes(colorIndex)?'#f7f2e5':'#294c3d';
-    if(n<=16){ctx.font=`600 ${n<=6?30:25}px sans-serif`;const name=pool[i].name.length>10?pool[i].name.slice(0,9)+'…':pool[i].name;ctx.fillText(name,r-34,280);}
-    else{ctx.font='500 23px sans-serif';ctx.fillText(String(pool[i].number).padStart(2,'0'),r-30);}
+    if(n<=16){ctx.font=`600 ${n<=6?30:25}px sans-serif`;const name=pool[i].name.length>10?pool[i].name.slice(0,9)+'…':pool[i].name;ctx.fillText(name,r-34,0,280);}
+    else{ctx.font='500 23px sans-serif';ctx.fillText(String(pool[i].number).padStart(2,'0'),r-30,0);}
     ctx.restore();
   }
   ctx.beginPath();ctx.arc(c,c,r-2,0,2*Math.PI);ctx.strokeStyle='#31513b';ctx.lineWidth=3;ctx.stroke();
