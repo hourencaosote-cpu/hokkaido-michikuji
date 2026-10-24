@@ -37,3 +37,21 @@ test('corrupt, unavailable and invalid persisted state is safe',()=>{
   assert.deepEqual(readRecord({getItem(){return '{broken'}}),{visited:[],favorites:[],history:[]});
   assert.deepEqual(readRecord({getItem(){return JSON.stringify({visited:['949','949',4],favorites:null,history:[{id:'949',at:10},{id:1,at:4}]})}}),{visited:['949'],favorites:[],history:[{id:'949',at:10}]});
 });
+
+test('all stations have source-backed guides and licensed photo credits; products are searchable', async()=>{
+  const {guides}=await import('./guides.js');
+  const {photos,heroPhoto}=await import('./media.js');
+  assert.equal(Object.keys(guides).length,stations.length);
+  assert.equal(Object.keys(photos).length,stations.length);
+  for(const station of stations){
+    const g=guides[station.id],p=photos[station.id];
+    assert.ok(g.summary&&g.tagline&&g.specialties.length&&g.localProducts.length&&g.highlights.length,station.name);
+    assert.equal(g.sourceUrl,station.url);
+    assert.ok(['thumb.wikimedia.org','upload.wikimedia.org'].includes(new URL(p.src).hostname));
+    assert.ok(p.author&&p.license&&new URL(p.licenseUrl).protocol==='https:',station.name);
+  }
+  assert.equal(heroPhoto.src,'hokkaido-biei.jpg');
+  const enriched=stations.map(s=>({...s,searchText:guides[s.id].localProducts.join(' ')}));
+  const found=filterStations(enriched,{areas:[],facilities:[],query:'ニセコ産アスパラ'});
+  assert.ok(found.some(s=>s.id==='949'));
+});

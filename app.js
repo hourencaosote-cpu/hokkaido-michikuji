@@ -1,13 +1,17 @@
-import {stations} from './data.js';
+import {stations as baseStations} from './data.js';
+import {guides} from './guides.js';
+import {photos,heroPhoto} from './media.js';
+const stations=baseStations.map(s=>({...s,guide:guides[s.id],photo:photos[s.id],searchText:[guides[s.id]?.tagline,...(guides[s.id]?.specialties||[]),...(guides[s.id]?.localProducts||[])].join(' ')}));
 import {areas,facilityLabels,filterStations,randomIndex,landingAngle,readRecord} from './core.js';
 const $ = selector => document.querySelector(selector);
 const icons={hotSpring:'onsen',restaurant:'food',produce:'basket',dogRun:'dog',ev:'ev'};
 const icon = name => `<svg class="icon" aria-hidden="true"><use href="#i-${name}"/></svg>`;
 const escapeHTML = value => String(value).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const stationName = value => value.split(/\s+/).map(part=>`<span class="station-name-part">${escapeHTML(part)}</span>`).join(' ');
+const nameParts={'あびら D51(デゴイチ)ステーション':['あびら','D51（デゴイチ）','ステーション'],'ガーデンスパ十勝川温泉':['ガーデンスパ','十勝川温泉'],'かみゆうべつ温泉チューリップの湯':['かみゆうべつ温泉','チューリップの湯'],'はなやか（葉菜野花）小清水':['はなやか','（葉菜野花）','小清水'],'あしょろ銀河ホール21':['あしょろ','銀河ホール21']};
+const stationName = value => (nameParts[value]||value.split(/\s+/)).map(part=>`<span class="station-name-part">${escapeHTML(part)}</span>`).join(' ');
 let storage;try{storage=window.localStorage;}catch{}
 let record=readRecord(storage), filters={areas:[],facilities:[],query:'',excludeVisited:false,favoritesOnly:false};
-let candidates=[], selected=null, resultKind='preview', view='roulette', journal='history', spinning=false, rotation=0, animation=null, tickerTimer=null, completionTimer=null, toastTimer=null, spinPool=null, spinIndex=null;
+let candidates=[], selected=stations.find(s=>s.id==='949'), detailStation=null, resultKind='preview', view='roulette', journal='history', spinning=false, rotation=0, animation=null, tickerTimer=null, completionTimer=null, toastTimer=null, spinPool=null, spinIndex=null;
 const canvas=$('#wheel'),ctx=canvas.getContext('2d'),reducedMotion=window.matchMedia('(prefers-reduced-motion: reduce)');
 $('#area-options').innerHTML=areas.map(area=>`<label class="area-option"><input type="checkbox" name="area" value="${area}"><span>${area}</span></label>`).join('');
 $('#facility-options').innerHTML=Object.entries(facilityLabels).map(([key,label])=>`<label class="facility-row"><input type="checkbox" name="facility" value="${key}">${icon(icons[key])}<span>${label}</span></label>`).join('');
@@ -42,13 +46,29 @@ function drawWheel(pool){
 }
 function empty(title,description,reset=false){return `<div class="empty-state">${icon('mountain')}<b>${title}</b>${description}${reset?'<button data-action="reset">条件をリセットする ↺</button>':''}</div>`;}
 function row(s,at){const fav=record.favorites.includes(s.id),visited=record.visited.includes(s.id);return `<article class="station-row"><span class="station-number">${String(s.number).padStart(3,'0')}</span><button class="station-open" data-action="open" data-id="${s.id}" aria-label="${escapeHTML(s.name)}の詳細を見る"><span class="pill">${s.area} · ${s.town}</span><h3>${stationName(s.name)}</h3><p>${s.facilities.map(x=>facilityLabels[x]).join(' · ')||'地域の情報を公式サイトでチェック'}</p></button><div class="row-buttons"><button class="row-icon ${fav?'selected':''}" data-action="favorite" data-id="${s.id}" aria-label="${escapeHTML(s.name)}を${fav?'お気に入りから外す':'お気に入りに追加'}" aria-pressed="${fav}">${icon('bookmark')}</button><button class="row-icon ${visited?'selected':''}" data-action="visit" data-id="${s.id}" aria-label="${escapeHTML(s.name)}を${visited?'未訪問に戻す':'訪問済みにする'}" aria-pressed="${visited}">${icon('check')}</button></div>${at?`<time class="history-date" datetime="${new Date(at).toISOString()}">${new Intl.DateTimeFormat('ja-JP',{month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'}).format(at)}</time>`:''}</article>`;}
+function photoCredit(p){return `<a href="${escapeHTML(p.source)}" target="_blank" rel="noopener noreferrer">写真：${escapeHTML(p.author)}</a> · <a href="${escapeHTML(p.licenseUrl)}" target="_blank" rel="noopener noreferrer">${escapeHTML(p.license)}</a>`;}
+function photoFigure(s,{eager=false,small=false}={}){const p=s.photo;return `<figure class="station-photo ${small?'small-photo':''}"><div class="photo-frame"><img src="${escapeHTML(p.src)}" alt="道の駅${escapeHTML(s.name)}の${s.id==='825'?'旧施設の写真':'写真'}" loading="${eager?'eager':'lazy'}" decoding="async" width="${p.width}" height="${p.height}"><span class="photo-fallback">写真を読み込めませんでした</span>${p.note?'<span class="photo-notice">旧施設の写真</span>':''}</div><figcaption>${photoCredit(p)}${p.note?`<span class="photo-note">${escapeHTML(p.note)}</span>`:''}</figcaption></figure>`;}
+function productGroup(title,items,cls=''){return items.length?`<div class="guide-group ${cls}"><span class="guide-label">${title}</span><p>${items.map(escapeHTML).join('・')}</p></div>`:'';}
+function stationCard(s){const g=s.guide,fav=record.favorites.includes(s.id),visited=record.visited.includes(s.id);return `<article class="station-card">${photoFigure(s,{small:true})}<div class="station-card-body"><div class="station-card-meta"><span class="pill">${s.area} · ${s.town}</span><span class="station-number">NO.${String(s.number).padStart(3,'0')}</span></div><h3>${stationName(s.name)}</h3><p class="station-tagline">${escapeHTML(g.tagline)}</p>${productGroup('この駅の名物・楽しみ',g.specialties)}${productGroup(s.town+'の特産品',g.localProducts,'local-products')}<div class="station-card-bottom"><button class="detail-button" data-action="open" data-id="${s.id}" aria-label="${escapeHTML(s.name)}を詳しく見る">詳しく見る <span>↗</span></button><button class="row-icon ${fav?'selected':''}" data-action="favorite" data-id="${s.id}" aria-label="${escapeHTML(s.name)}を${fav?'お気に入りから外す':'お気に入りに追加'}" aria-pressed="${fav}">${icon('bookmark')}</button><button class="row-icon ${visited?'selected':''}" data-action="visit" data-id="${s.id}" aria-label="${escapeHTML(s.name)}を${visited?'未訪問に戻す':'訪問済みにする'}" aria-pressed="${visited}">${icon('check')}</button></div></div></article>`;}
+function renderDetail(){
+  if(!detailStation)return;const s=detailStation,g=s.guide,fav=record.favorites.includes(s.id),visited=record.visited.includes(s.id);
+  $('#detail-content').innerHTML=`${photoFigure(s,{eager:true})}<div class="detail-body"><span class="pill">${s.area} · ${s.town}</span><h2 id="detail-title">${stationName(s.name)}</h2><p class="detail-tagline">${escapeHTML(g.tagline)}</p><p class="detail-summary">${escapeHTML(g.summary)}</p><div class="detail-products">${productGroup('この駅の名物・楽しみ',g.specialties)}${productGroup(s.town+'の特産品',g.localProducts,'local-products')}</div><section class="detail-highlights"><h3>寄り道のポイント</h3><ul>${g.highlights.map(x=>`<li>${escapeHTML(x)}</li>`).join('')}</ul></section>${g.nearby.length?productGroup('周辺の見どころ',g.nearby):''}<div class="facility-tags">${s.facilities.map(key=>`<span>${icon(icons[key])}${facilityLabels[key]}</span>`).join('')}</div><dl class="station-facts"><div><dt>所在地</dt><dd>${escapeHTML(s.address)}</dd></div>${Object.entries(g.profile||{}).map(([key,value])=>`<div><dt>${escapeHTML(key)}</dt><dd>${escapeHTML(value)}</dd></div>`).join('')}</dl><p class="source-note">情報確認：${g.verifiedAt} · <a href="${g.sourceUrl}" target="_blank" rel="noopener noreferrer">出典：北の道の駅 ↗</a>${g.guideSourceUrl&&g.guideSourceUrl!==g.localProductSourceUrl?` · <a href="${g.guideSourceUrl}" target="_blank" rel="noopener noreferrer">施設の紹介 ↗</a>`:''}${g.localProductSourceUrl?` · <a href="${g.localProductSourceUrl}" target="_blank" rel="noopener noreferrer">特産品の出典 ↗</a>`:''}<br>営業時間・休館日・メニューは変更される場合があります。</p><div class="detail-actions"><a class="outline-button maps-button" href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent('道の駅 '+s.name+' '+s.address)}" target="_blank" rel="noopener noreferrer">${icon('pin')} Google マップで開く ↗</a><a class="outline-button" href="${s.url}" target="_blank" rel="noopener noreferrer">駅の公式情報 ↗</a><a class="outline-button" href="${escapeHTML(g.townUrl)}" target="_blank" rel="noopener noreferrer">${s.town}の情報 ↗</a><button class="outline-button ${fav?'selected':''}" data-action="favorite" data-id="${s.id}" aria-pressed="${fav}">${icon('bookmark')}${fav?'お気に入り登録済み':'お気に入りに追加'}</button><button class="outline-button ${visited?'selected':''}" data-action="visit" data-id="${s.id}" aria-pressed="${visited}">${icon('check')}${visited?'訪問済み':'訪問済みにする'}</button><button class="choose-station" data-action="choose" data-id="${s.id}">この駅を行き先にする ↗</button></div></div>`;
+}
+function openDetail(s){detailStation=s;renderDetail();$('#station-dialog').showModal();$('#station-dialog').scrollTop=0;}
+$('#close-detail').addEventListener('click',()=>$('#station-dialog').close());
+$('#station-dialog').addEventListener('click',e=>{if(e.target!==e.currentTarget)return;const r=e.currentTarget.getBoundingClientRect();if(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom)e.currentTarget.close();});
+$('#station-dialog').addEventListener('close',()=>{detailStation=null;});
+document.addEventListener('error',e=>{if(e.target.tagName==='IMG'&&e.target.closest('.photo-frame'))e.target.closest('.photo-frame').classList.add('photo-failed');},true);
+$('#hero-credit').innerHTML=photoCredit(heroPhoto);
+$('#landscape-credit').innerHTML=photoCredit(heroPhoto);
 function renderResult(){
   if(!selected)return;
-  const s=selected,fav=record.favorites.includes(s.id),visited=record.visited.includes(s.id);
+  const s=selected,g=s.guide,fav=record.favorites.includes(s.id),visited=record.visited.includes(s.id);
+  $('#result-photo').innerHTML=photoFigure(s,{eager:true});
   $('#result-card').classList.add('has-result');
   $('#result-heading').textContent=resultKind==='draw'?'今回の行き先は、ここ。':'気になる寄り道';
   const outside=!candidates.some(x=>x.id===s.id);
-  $('#result-content').innerHTML=`${resultKind==='draw'?`<p class="result-meta">YOUR NEXT STOP${outside?' · 現在の絞り込み条件の対象外です':''}</p>`:''}<span class="pill">${s.area} · ${s.town}</span><h3>${stationName(s.name)}</h3><p class="address">${icon('pin')}<span>${escapeHTML(s.address)}</span></p><div class="facility-tags">${s.facilities.map(key=>`<span>${icon(icons[key])}${facilityLabels[key]}</span>`).join('')}</div><div class="destination-actions"><a class="outline-button maps-button" href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent('道の駅 '+s.name+' '+s.address)}" target="_blank" rel="noopener noreferrer">${icon('pin')} Google マップで開く ↗</a><a class="outline-button" href="${s.url}" target="_blank" rel="noopener noreferrer">公式の駅情報を見る ↗</a><button class="outline-button ${fav?'selected':''}" data-action="favorite" data-id="${s.id}" aria-label="${fav?'お気に入りから外す':'お気に入りに追加'}" aria-pressed="${fav}">${icon('bookmark')}</button></div><button class="visit-button ${visited?'selected':''}" data-action="visit" data-id="${s.id}" aria-pressed="${visited}">${icon('check')}${visited?'訪問済み ✓（押すと元に戻す）':'行ったら、訪問済みにする'}</button>`;
+  $('#result-content').innerHTML=`${resultKind==='draw'?`<p class="result-meta">YOUR NEXT STOP${outside?' · 現在の絞り込み条件の対象外です':''}</p>`:''}<span class="pill">${s.area} · ${s.town}</span><h3>${stationName(s.name)}</h3><p class="result-guide-summary">${escapeHTML(g.summary)}</p>${productGroup('この駅の名物・楽しみ',g.specialties)}${productGroup(s.town+'の特産品',g.localProducts,'local-products')}<button class="result-more" data-action="open" data-id="${s.id}">見どころ・営業情報を詳しく見る ↗</button><p class="address">${icon('pin')}<span>${escapeHTML(s.address)}</span></p><div class="facility-tags">${s.facilities.map(key=>`<span>${icon(icons[key])}${facilityLabels[key]}</span>`).join('')}</div><div class="destination-actions"><a class="outline-button maps-button" href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent('道の駅 '+s.name+' '+s.address)}" target="_blank" rel="noopener noreferrer">${icon('pin')} Google マップで開く ↗</a><a class="outline-button" href="${s.url}" target="_blank" rel="noopener noreferrer">公式の駅情報を見る ↗</a><button class="outline-button ${fav?'selected':''}" data-action="favorite" data-id="${s.id}" aria-label="${fav?'お気に入りから外す':'お気に入りに追加'}" aria-pressed="${fav}">${icon('bookmark')}</button></div><button class="visit-button ${visited?'selected':''}" data-action="visit" data-id="${s.id}" aria-pressed="${visited}">${icon('check')}${visited?'訪問済み ✓（押すと元に戻す）':'行ったら、訪問済みにする'}</button>`;
 }
 function renderJournal(){
   $('#stats').innerHTML=`<div><strong>${record.visited.length}</strong><span>訪問した駅 / 128</span></div><div><strong>${record.favorites.length}</strong><span>お気に入り</span></div><div><strong>${record.history.length}</strong><span>最近の抽選</span></div>`;
@@ -67,10 +87,10 @@ function render(){
   $('#spin span').textContent=candidates.length?'ルーレットを回す':'条件を変えてみよう';
   $('#wheel-note').textContent=candidates.length?`${candidates.length}駅すべて、同じ確率で。${candidates.length>16?'（表示は登録番号）':''}`:'候補がありません。条件を少しゆるめてみよう。';
   if(!spinning){rotation=0;canvas.style.transform='rotate(0deg)';drawWheel(candidates);}
-  $('#station-list').innerHTML=candidates.map(s=>row(s)).join('')||empty('まだ見ぬ寄り道を、もう一度。','条件を少しゆるめると、行き先が見つかるかも。',true);
+  $('#station-list').innerHTML=candidates.map(s=>stationCard(s)).join('')||empty('まだ見ぬ寄り道を、もう一度。','条件を少しゆるめると、行き先が見つかるかも。',true);
   const preferred=['949','13542','3143','19505'];
   const preview=[...candidates].sort((a,b)=>{const ai=preferred.indexOf(a.id),bi=preferred.indexOf(b.id);return (ai<0?999:ai)-(bi<0?999:bi);}).slice(0,4);
-  $('#candidate-preview').innerHTML=preview.map(s=>`<button class="preview-card" data-action="open" data-id="${s.id}" aria-label="${escapeHTML(s.name)}の詳細を見る"><span class="preview-image"><img src="landscape.svg" alt="" loading="lazy"></span><span class="preview-info"><span class="pill">${s.area} · ${s.town}</span><h3>${stationName(s.name)}</h3><p>${s.facilities.slice(0,2).map(x=>facilityLabels[x]).join(' · ')||'小さな寄り道へ'}</p></span><span class="preview-arrow" aria-hidden="true">↗</span></button>`).join('')||empty('ぴったりの駅を、探そう。','条件を変えてみてください。',true);
+  $('#candidate-preview').innerHTML=preview.map(s=>stationCard(s)).join('')||empty('ぴったりの駅を、探そう。','条件を変えてみてください。',true);
   renderResult();renderJournal();
 }
 function setView(next){
@@ -86,10 +106,11 @@ document.addEventListener('click',event=>{
   const button=event.target.closest('[data-action]');if(!button||spinning)return;
   const {action,id}=button.dataset;if(action==='reset'){resetFilters();return;}
   const s=stations.find(s=>s.id===id);if(!s)return;
-  if(action==='open'){selected=s;resultKind='preview';setView('roulette');renderResult();$('#result-card').scrollIntoView({behavior:reducedMotion.matches?'instant':'smooth',block:'nearest'});return;}
+  if(action==='open'){openDetail(s);return;}
+  if(action==='choose'){$('#station-dialog').close();selected=s;resultKind='preview';setView('roulette');renderResult();$('#result-card').scrollIntoView({behavior:reducedMotion.matches?'instant':'smooth',block:'nearest'});return;}
   const field=action==='favorite'?'favorites':action==='visit'?'visited':null;if(!field)return;
   const removing=record[field].includes(id);record[field]=removing?record[field].filter(x=>x!==id):[...record[field],id];
-  const saved=persist();render();if(saved)toast(action==='favorite'?(removing?'お気に入りから外しました':'お気に入りに追加しました'):(removing?'未訪問に戻しました':'旅の記録に追加しました。いい寄り道でしたね。'));
+  const saved=persist();render();if($('#station-dialog').open){renderDetail();$('#detail-content').querySelector(`[data-action="${action}"]`)?.focus();}if(saved)toast(action==='favorite'?(removing?'お気に入りから外しました':'お気に入りに追加しました'):(removing?'未訪問に戻しました':'旅の記録に追加しました。いい寄り道でしたね。'));
 });
 function setLocked(locked){document.querySelectorAll('#filters input, #reset, [data-view], #see-all, .mobile-filter-button').forEach(el=>el.disabled=locked);$('#spin').disabled=locked||!candidates.length;}
 function finishSpin(){

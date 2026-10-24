@@ -6,7 +6,7 @@ export function filterStations(stations, filters, record = {}) {
   const visited = new Set(record.visited || []), favorites = new Set(record.favorites || []);
   return stations.filter(s =>
     (!filters.areas.length || filters.areas.includes(s.area)) &&
-    (!words || normalize(s.name+s.town+s.address).includes(words)) &&
+    (!words || normalize(s.name+s.town+s.address+(s.searchText||'')).includes(words)) &&
     filters.facilities.every(f=>s.facilities.includes(f)) &&
     (!filters.excludeVisited || !visited.has(s.id)) &&
     (!filters.favoritesOnly || favorites.has(s.id))
