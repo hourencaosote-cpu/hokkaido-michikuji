@@ -70,3 +70,9 @@ Framework-free ESM static site, built with `node build.mjs`; no runtime backend 
 - Built 133 complete HTML pages plus 404. Local QA: 30 page/width combinations (6 page types × 320/375/390/768/1440px), no page overflow. Wheel dimensions match at 8 portrait/landscape viewport sizes, including while rotating. Existing uniform-selection/storage tests and static-route checks pass.
 
 Local verification: `npm run build`, `npm test`, then `npm start` and open `http://127.0.0.1:4173/`. The server serves the built routes from `dist/`.
+
+## Phase 2 / private drive tools
+
+Geolocation is requested only by pressing the explicit button. Coordinates remain in page memory (not localStorage, URLs, analytics or requests), can be erased, and are lost on navigation. Distance uses Haversine with Earth mean radius6371.0088km; 30/60/100km filters label approximate straight-line distances. Denial/timeout/unsupported errors explain area-selection fallback. All128 station destinations use current, source-verified official map markers; directions open Google Maps URLs without API keys. Missing coordinates fall back to name/address search. Shiranuka's stale separate Google link was not used.
+
+Winter-only filtering is not enabled: some free-text winter hours exist, but there is no complete, structured and sufficiently verified seasonal-closure/operating-period dataset. Unknown stations are not guessed to be winter-open. The actual station opening/closing information remains visible on each page.

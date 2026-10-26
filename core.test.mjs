@@ -55,3 +55,14 @@ test('all stations have source-backed guides and licensed photo credits; product
   const found=filterStations(enriched,{areas:[],facilities:[],query:'ニセコ産アスパラ'});
   assert.ok(found.some(s=>s.id==='949'));
 });
+
+test('official coordinates support private straight-line filters and navigation fallback',async()=>{
+ const {stations:enriched}=await import('./model.js');const {distanceKm,navigationUrl,requestLocation}=await import('./geo.js');
+ assert.ok(enriched.every(s=>s.coordinates&&s.coordinates.lat>41&&s.coordinates.lat<46&&s.coordinates.lng>139&&s.coordinates.lng<147));
+ const s=enriched.find(s=>s.id==='949');assert.equal(distanceKm(s.coordinates,s.coordinates),0);
+ assert.ok(Math.abs(distanceKm({lat:0,lng:0},{lat:0,lng:1})-111.195)<.01);
+ const result=filterStations(enriched,{areas:[],facilities:[],query:'',position:s.coordinates,radiusKm:1});assert.ok(result.some(x=>x.id===s.id));assert.ok(result.every(x=>distanceKm(s.coordinates,x.coordinates)<=1));
+ assert.match(navigationUrl(s),/maps\/dir\/\?api=1&destination=/);assert.match(navigationUrl({...s,coordinates:null}),/maps\/search/);
+ await assert.rejects(requestLocation({getCurrentPosition(_success,error){error({code:1});}}),/許可されません/);
+ await assert.rejects(requestLocation({getCurrentPosition(_success,error){error({code:3});}}),/時間切れ/);
+});

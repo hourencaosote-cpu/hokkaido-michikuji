@@ -60,3 +60,5 @@ html{scrollbar-gutter:stable}
 @media(max-width:700px){.photo-hero{height:485px}.hero-primary{font-size:13px!important}}
 @media(max-width:370px){.photo-hero{height:475px}.hero-primary{font-size:12px!important}}
 .lower-photo{margin:0;max-width:280px;flex:1}.lower-photo img{width:100%;height:auto;display:block;border-radius:10px}.lower-photo figcaption{font-size:8px;line-height:1.8;margin-top:6px;color:#687b5c}
+.geo-filter{border-top:1px solid var(--line);padding-top:18px;margin-top:15px}.geo-filter>label{display:block;font-size:11px;font-weight:600;margin:17px 0 9px}.geo-filter .outline-button{width:100%;min-height:44px;font-size:11px}#radius{font:inherit;width:100%;min-height:44px;border:1px solid #d5d9c9;border-radius:7px;background:var(--card);color:var(--green);padding:9px;font-size:12px}#radius:disabled{opacity:.7}#location-status{font-size:10px;line-height:1.9;color:#607057;margin:10px 0}.distance-label{display:block;color:#597047;font-size:10px;margin:0 0 12px;line-height:1.8}.geo-filter>.text-button{min-height:36px}
+@media(max-width:700px){#radius{font-size:16px}.geo-filter .outline-button{font-size:12px}.distance-label{font-size:11px}}

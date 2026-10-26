@@ -1,3 +1,4 @@
+import {distanceKm} from './geo.js';
 export const areas = ['道央','道南','道北','オホーツク','十勝','釧路・根室'];
 export const facilityLabels = {hotSpring:'温泉',restaurant:'レストラン',produce:'産地直売所',dogRun:'ドッグラン',ev:'EV充電器'};
 export const normalize = value => String(value).normalize('NFKC').toLowerCase().replace(/[\s・☆★♡「」()（）]/g,'');
@@ -9,6 +10,7 @@ export function filterStations(stations, filters, record = {}) {
     (!words || normalize(s.name+s.town+s.address+(s.searchText||'')).includes(words)) &&
     filters.facilities.every(f=>s.facilities.includes(f)) &&
     (!filters.stamp || s.stamp?.status===filters.stamp) &&
+    (!filters.radiusKm || !filters.position || (distanceKm(filters.position,s.coordinates)!==null&&distanceKm(filters.position,s.coordinates)<=filters.radiusKm)) &&
     (!filters.excludeVisited || !visited.has(s.id)) &&
     (!filters.favoritesOnly || favorites.has(s.id))
   );
