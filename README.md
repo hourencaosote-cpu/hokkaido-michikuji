@@ -58,3 +58,15 @@ http://localhost:4173/ を開きます。データを更新した場合は `node
 - 営業情報と写真は確認時点のものです。訪問前の公式情報確認を案内しています。
 
 写真URLの応答確認：128/128。レイアウトは320・375・390・430・768・1024・1440pxの7幅で、トップ・カード一覧・詳細の横はみ出しを確認します。
+
+## 2026-10-25 / Phase 1
+
+Framework-free ESM static site, built with `node build.mjs`; no runtime backend or database. `data.js` contains 128 official station records, `guides.js` contains sourced descriptions, `media.js` contains licensed photo metadata, `stamps.js` contains verified physical-stamp access information. `pages.mjs` renders HTML shared by the homepage, roulette, catalog, stamp guide, journal, and 128 station pages. `components.js` is shared between build and browser. All primary station content is present in the generated HTML before JavaScript runs.
+
+- Fixed the wheel's sizing: a square wrapper and absolute inset keep canvas width and height equal independently of intrinsic canvas dimensions. Added the 2.8-second station-name drum with a small overshoot; result is chosen before animation.
+- Hero provides an immediate unfiltered draw, a one-line explanation, and an 8-second slideshow using two already-held, licensed Biei photos. Both photos retain author/source/license links. Automatic motion stops for reduced-motion preferences, and manual/pause controls remain available.
+- Removed the duplicate lower landscape and unused clover glyphs. `gallery.js` has `lowerPhoto=null`; providing a properly credited photo there renders the optional lower image. No new photos were fetched for this change.
+- Filters are collapsed initially on all screen widths. Stamp times are distinct from toilet access; 31 unqualified 24h, 83 hours-limited, and 14 conditional records. Locations are explicitly confirmed for 29 records and otherwise marked unconfirmed. Supplemental primary-source links and exceptions remain in the data.
+- Built 133 complete HTML pages plus 404. Local QA: 30 page/width combinations (6 page types × 320/375/390/768/1440px), no page overflow. Wheel dimensions match at 8 portrait/landscape viewport sizes, including while rotating. Existing uniform-selection/storage tests and static-route checks pass.
+
+Local verification: `npm run build`, `npm test`, then `npm start` and open `http://127.0.0.1:4173/`. The server serves the built routes from `dist/`.

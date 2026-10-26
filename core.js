@@ -8,6 +8,7 @@ export function filterStations(stations, filters, record = {}) {
     (!filters.areas.length || filters.areas.includes(s.area)) &&
     (!words || normalize(s.name+s.town+s.address+(s.searchText||'')).includes(words)) &&
     filters.facilities.every(f=>s.facilities.includes(f)) &&
+    (!filters.stamp || s.stamp?.status===filters.stamp) &&
     (!filters.excludeVisited || !visited.has(s.id)) &&
     (!filters.favoritesOnly || favorites.has(s.id))
   );
