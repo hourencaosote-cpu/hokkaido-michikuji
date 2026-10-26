@@ -66,3 +66,11 @@ test('official coordinates support private straight-line filters and navigation 
  await assert.rejects(requestLocation({getCurrentPosition(_success,error){error({code:1});}}),/許可されません/);
  await assert.rejects(requestLocation({getCurrentPosition(_success,error){error({code:3});}}),/時間切れ/);
 });
+
+test('daily station uses JST midnight, stable ordering, and luck draws independently',async()=>{
+ const {dailyStation,jstDateKey,drawFortune,areaProgress}=await import('./fortune.js');
+ assert.equal(jstDateKey(new Date('2026-10-25T14:59:59Z')),'2026-10-25');assert.equal(jstDateKey(new Date('2026-10-25T15:00:00Z')),'2026-10-26');
+ const date=new Date('2026-10-26T01:00:00Z'),a=dailyStation(stations,date);assert.equal(a.station.id,dailyStation([...stations].reverse(),date).station.id);
+ let calls=0;const luck=drawFortune({getRandomValues(values){values[0]=calls++===0?3:2;return values;}});assert.equal(luck.key,'kichi');assert.equal(luck.comment,luck.comments[2]);assert.equal(calls,2);
+ const progress=areaProgress(stations,[stations[0].id,stations[0].id,'not-a-station']);assert.equal(progress.reduce((n,p)=>n+p.visited,0),1);assert.equal(progress.reduce((n,p)=>n+p.total,0),128);
+});

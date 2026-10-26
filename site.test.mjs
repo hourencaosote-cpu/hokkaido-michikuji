@@ -20,3 +20,16 @@ test('station OGPs have exact PNG dimensions and share variants preserve the cho
  const {fortuneGrades}=await import('./fortune.js');const {shareData,xIntent}=await import('./share.js');
  for(const s of stations)for(const f of [null,...fortuneGrades]){const name=s.id+(f?'-'+f.key:'')+'.png',png=readFileSync(new URL('./dist/ogp/'+name,import.meta.url));assert.equal(png.readUInt32BE(16),1200);assert.equal(png.readUInt32BE(20),630);if(f){const data=shareData(s,f.key),html=readFileSync(new URL('./dist/share/'+s.id+'/'+f.key+'/index.html',import.meta.url),'utf8');assert.ok(data.url.endsWith('/'+f.key+'/'));assert.ok(html.includes('/ogp/'+name));assert.ok(data.text.includes(f.label));assert.ok(xIntent(data).startsWith('https://twitter.com/intent/tweet?'));}}
 });
+
+test('service worker serves a previously visited station offline and isolates cache updates',async()=>{
+ const vm=await import('node:vm'),events={},stores=new Map(),origin='https://hokkaido-michikuji.vercel.app';let online=true;
+ const key=input=>new URL(typeof input==='string'?input:input.url,origin).href;
+ const caches={async open(name){if(!stores.has(name))stores.set(name,new Map());const store=stores.get(name);return{async addAll(paths){for(const p of paths)store.set(key(p),new Response('precached '+p));},async match(request){return store.get(key(request))?.clone();},async put(request,response){store.set(key(request),response.clone());},async keys(){return [...store.keys()].map(url=>({url}));},async delete(request){return store.delete(key(request));}};},async keys(){return [...stores.keys()];},async delete(name){return stores.delete(name);}};
+ stores.set('another-app-cache',new Map());stores.set('michikuji-v-obsolete',new Map());
+ const scope={self:{location:{origin},clients:{async claim(){}},addEventListener(name,fn){events[name]=fn;},skipWaiting(){}},caches,URL,Response,fetch:async request=>{if(!online)throw Error('offline');return new Response('station page '+key(request));}};
+ vm.runInNewContext(readFileSync(new URL('./dist/sw.js',import.meta.url),'utf8'),scope);let pending;events.install({waitUntil(p){pending=p;}});await pending;events.activate({waitUntil(p){pending=p;}});await pending;assert.ok(stores.has('another-app-cache'));assert.ok(!stores.has('michikuji-v-obsolete'));
+ const load=async path=>{let response;events.fetch({request:{url:origin+path,method:'GET',mode:'navigate'},respondWith(p){response=p;}});return(await response).text();};
+ const saved=await load('/stations/949/');online=false;assert.equal(await load('/stations/949/'),saved);assert.match(await load('/stations/not-saved/'),/precached \/offline.html/);
+ let intercepted=false;events.fetch({request:{url:'https://www.google-analytics.com/g/collect',method:'GET'},respondWith(){intercepted=true;}});assert.equal(intercepted,false);
+ const manifest=JSON.parse(readFileSync(new URL('./dist/manifest.webmanifest',import.meta.url)));assert.equal(manifest.display,'standalone');for(const icon of manifest.icons){const png=readFileSync(new URL('./dist'+icon.src,import.meta.url));assert.equal(png.readUInt32BE(16),Number(icon.sizes.split('x')[0]));}
+});

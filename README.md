@@ -82,3 +82,11 @@ Winter-only filtering is not enabled: some free-text winter hours exist, but the
 128 station pages have unique metadata and1200×630 PNGs. Four additional static share variants per station preserve the actual result fortune in the OGP image (`/share/{id}/{grade}/`); they canonicalize to the station and are excluded from indexing/sitemap. No server is needed. @resvg/resvg-js2.6.2 is the sole build dependency; Noto Sans JP is bundled with its SIL OFL license. Fonts are used only at build, not downloaded by visitors. PNGs are cached locally by input/font hash.
 
 Web Share API runs only on explicit button press; unsupported/failing sharing reveals X intent and URL-copy options. Story graphics are1080×1920 client-side Canvas images with station/fortune and a save preview; no remote photos are painted, so cross-origin taint is avoided. All generated content uses station data and the playful fortune rather than invented facility facts. Sitemap/robots cover canonical pages.
+
+## Phase 4 / daily discovery and offline journal
+
+Fortune (大吉/中吉/小吉/吉 plus multiple comments) uses independent crypto draws after the station result is fixed. It does not weight stations. The daily common station uses a versioned hash of the JST date and stable registration-number order, updates across JST midnight and on returning to the tab. Journal counts and six area progress bars use deduplicated valid visited IDs, preserving existing localStorage records.
+
+Result paper unfolding, luck-stamp pop, <=1.8second self-drawn confetti for大吉, visit stamping, favorite bounce, once-only section reveals, small button interactions and gentle hero zoom use transform/opacity. Reduced-motion disables decorative animation, auto-slideshow and confetti and finishes drawing immediately.
+
+PWA: standalone manifest,192/512 PNG icons, hashed/versioned worker; core data and pages cached, visited station pages retained for offline navigation, uncached pages show an explicit offline fallback. Photo cache is limited to80 Wikimedia images; analytics are never intercepted/cached. Updates ask the user to reload, avoiding automatic interruption of a draw. Browser storage/worker failures leave online functionality usable. Privacy remains unchanged: no user coordinates are stored in caches, localStorage, URLs or requests.

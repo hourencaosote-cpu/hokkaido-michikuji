@@ -1,3 +1,4 @@
+import {fortuneByKey} from './fortune.js';
 import {shareData,xIntent} from './share.js';
 import {navigationUrl} from './geo.js';
 import {facilityLabels} from './core.js';
@@ -23,3 +24,5 @@ export const facilityTags=s=>`<div class="facility-tags">${s.facilities.map(k=>`
 export const empty=(title,description,reset=false)=>`<div class="empty-state">${icon('mountain')}<b>${esc(title)}</b><p>${esc(description)}</p>${reset?'<button data-action="reset">条件をリセットする ↺</button>':''}</div>`;
 
 export function sharePanel(s,key){const data=shareData(s,key);return `<section class="share-panel" data-share-station="${s.id}" data-fortune="${key||''}" aria-label="行き先をシェア"><button type="button" data-share="native" class="outline-button">行き先をシェア ↗</button><button type="button" data-share="story" class="outline-button">ストーリーズ画像を作る</button><div class="share-fallback" hidden><a href="${esc(xIntent(data))}" target="_blank" rel="noopener noreferrer" class="outline-button">Xでシェア ↗</a><button type="button" data-share="copy" class="outline-button">URLをコピー</button><input class="share-url" type="text" readonly aria-label="シェア用URL" value="${esc(data.url)}"></div></section>`;}
+
+export function fortuneBlock(key,comment){const f=fortuneByKey(key);return f?`<div class="fortune-block"><span class="fortune-heading">今日の寄り道運</span><strong class="fortune-rank">${f.label}</strong><p>${esc(comment||f.comments[0])}</p><small>旅のお楽しみのおみくじです。</small></div>`:'';}
