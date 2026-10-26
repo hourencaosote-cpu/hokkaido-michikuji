@@ -2,3 +2,7 @@ dist/
 .vercel/
 node_modules/
 .DS_Store
+
+.cache/
+research/
+RESUME.md

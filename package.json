@@ -1,1 +1,1 @@
-{"name":"hokkaido-michikuji","version":"1.0.0","private":true,"type":"module","scripts":{"build":"node build.mjs","test":"node build.mjs && node --test core.test.mjs site.test.mjs","start":"node serve.mjs"},"engines":{"node":">=20"}}
+{"name":"hokkaido-michikuji","version":"1.0.0","private":true,"type":"module","scripts":{"build":"node build.mjs","test":"node build.mjs && node --test core.test.mjs site.test.mjs","start":"node serve.mjs"},"engines":{"node":">=20"},"dependencies":{"@resvg/resvg-js":"2.6.2"}}

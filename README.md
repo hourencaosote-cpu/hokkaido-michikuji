@@ -76,3 +76,9 @@ Local verification: `npm run build`, `npm test`, then `npm start` and open `http
 Geolocation is requested only by pressing the explicit button. Coordinates remain in page memory (not localStorage, URLs, analytics or requests), can be erased, and are lost on navigation. Distance uses Haversine with Earth mean radius6371.0088km; 30/60/100km filters label approximate straight-line distances. Denial/timeout/unsupported errors explain area-selection fallback. All128 station destinations use current, source-verified official map markers; directions open Google Maps URLs without API keys. Missing coordinates fall back to name/address search. Shiranuka's stale separate Google link was not used.
 
 Winter-only filtering is not enabled: some free-text winter hours exist, but there is no complete, structured and sufficiently verified seasonal-closure/operating-period dataset. Unknown stations are not guessed to be winter-open. The actual station opening/closing information remains visible on each page.
+
+## Phase 3 / static sharing
+
+128 station pages have unique metadata and1200×630 PNGs. Four additional static share variants per station preserve the actual result fortune in the OGP image (`/share/{id}/{grade}/`); they canonicalize to the station and are excluded from indexing/sitemap. No server is needed. @resvg/resvg-js2.6.2 is the sole build dependency; Noto Sans JP is bundled with its SIL OFL license. Fonts are used only at build, not downloaded by visitors. PNGs are cached locally by input/font hash.
+
+Web Share API runs only on explicit button press; unsupported/failing sharing reveals X intent and URL-copy options. Story graphics are1080×1920 client-side Canvas images with station/fortune and a save preview; no remote photos are painted, so cross-origin taint is avoided. All generated content uses station data and the playful fortune rather than invented facility facts. Sitemap/robots cover canonical pages.
